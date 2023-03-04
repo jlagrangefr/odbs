@@ -1,0 +1,8 @@
+v0.1.0
+
+Legacy code importation
+
+Program capability :
+- Add task to database, source folder indexation
+- Add drive to database, indexation with 3 mode (Ignore, Delete, Import) to recover database loss
+- Main backup loop, no drive group detection so event B or C group drive will be considered A group
