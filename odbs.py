@@ -958,15 +958,15 @@ class Odbs:
         # Clean files entry
         match self.selected_drive['group']:
             case "A":
-                self.cursor.execute("UPDATE `files` SET `backup_a_drive` = NULL, `backup_a_path` = NULL, `backup_a_date` WHERE `backup_a_drive` = %(drive)s",{
+                self.cursor.execute("UPDATE `files` SET `backup_a_drive` = NULL, `backup_a_path` = NULL, `backup_a_date` = NULL WHERE `backup_a_drive` = %(drive)s",{
                     'drive':self.selected_drive['id']
                 })
             case "B":
-                self.cursor.execute("UPDATE `files` SET `backup_b_drive` = NULL, `backup_b_path` = NULL, `backup_b_date` WHERE `backup_b_drive` = %(drive)s",{
+                self.cursor.execute("UPDATE `files` SET `backup_b_drive` = NULL, `backup_b_path` = NULL, `backup_b_date` = NULL WHERE `backup_b_drive` = %(drive)s",{
                     'drive':self.selected_drive['id']
                 })
             case "C":
-                self.cursor.execute("UPDATE `files` SET `backup_c_drive` = NULL, `backup_c_path` = NULL, `backup_c_date` WHERE `backup_c_drive` = %(drive)s",{
+                self.cursor.execute("UPDATE `files` SET `backup_c_drive` = NULL, `backup_c_path` = NULL, `backup_c_date` = NULL WHERE `backup_c_drive` = %(drive)s",{
                     'drive':self.selected_drive['id']
                 })
             case _:
