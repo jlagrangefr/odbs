@@ -17,7 +17,7 @@ class Odbs:
 
     database = {"host":None,"port":None,"user":None,"pass":None,"name":None}
 
-    selected_drive = {"id":None,"name":None,"path":None}
+    selected_drive = {"id":None,"name":None,"path":None,"group":None,"size":None,"free_space":None,"ts_registered":None,"ts_lastindex":None,"ts_lastsync":None}
     selected_task = {"id":None,"name":None,"path":None}
     task_action = None
     drive_action = None
@@ -177,10 +177,7 @@ class Odbs:
                         else:
                             self.startTask()
                     case "manage_drives":
-                        if self.selected_drive['id'] is None:
-                            self.checkDrives()
-                        else:
-                            self.printMenuDriveManagement()
+                        self.printMenuDriveManagement()
                     case "index_task":
                         self.indexTask()
                     case "restore_files":
@@ -190,7 +187,91 @@ class Odbs:
     
     # Print menu drive management
     def printMenuDriveManagement(self):
-        # Count registered drives for task
+        if(self.selected_drive['id'] is not None):
+            self.printMenuDriveAction()
+        else:
+            self.printMenuDriveSelection()
+    
+    # Print menu drive selection
+    def printMenuDriveSelection(self):
+        print(" Select a drive : ".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
+        self.cursor.execute("SELECT `id`,`name`,`group`,`size`,`free_space` FROM `drives` WHERE `task` = {} ORDER BY `group`,`name`".format(self.selected_task['id']))
+        if self.cursor.rowcount == 0:
+            print(" No drive registered for this task ".center(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
+        else:
+            registered_drives = self.cursor.fetchall()
+            # Get list of connected drives
+            connected_drives = self.getConnectedDrives()
+            drives_count = 1
+            drives_choices = [(0,0,0,0,0,0)]
+            print(" 0. Back to main menu ".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
+            for id,name,group,size,free_space in registered_drives:
+                if name in connected_drives:
+                    print (" {}. {} ({} - {}) Connected".format(drives_count,name,group,self.convertSize(size)).ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
+                    # Get drive path from disk label
+                    path = self.getDrivePath(name)
+                    # Update drive info in database : size and free_space
+                    free_space = self.getDriveFreeSpace(path)
+                    self.cursor.execute("UPDATE `drives` SET `size` = {}, `free_space` = {} WHERE `id` = {}".format(size,free_space,id))
+                    self.cnx.commit()
+                else:
+                    print (" {}. {} ({} - {}) ".format(drives_count,name,group,self.convertSize(size)).ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
+                drives_choices.append((drives_count,id,name,group,size,free_space))
+                drives_count += 1
+            print("".center(self.terminal_width, '#'))
+            choice = self.askString("Select a drive : ",[str(x[0]) for x in drives_choices])
+            if choice == "0":
+                self.selected_drive = {"id":None,"name":None,"path":None,"group":None,"size":None,"free_space":None,"ts_registered":None,"ts_lastindex":None,"ts_lastsync":None}
+                self.task_action = None
+            else:
+                for action_id,id,name,group,size,free_space in drives_choices:
+                    if str(action_id) == choice:
+                        # If drive is connected get path
+                        connected_drives = self.getConnectedDrives("full")
+                        path = None
+                        for drive_path,drive_name,drive_size,drive_free_space in connected_drives:
+                            if name == drive_name:
+                                path = drive_path
+                        self.selected_drive = {"id":id,"name":name,"group":group,"path":path,"group":group,"size":size,"free_space":free_space,"ts_registered":None,"ts_lastindex":None,"ts_lastsync":None}
+                        self.task_action = "manage_drives"
+    
+    # Print menu drive action
+    def printMenuDriveAction(self):
+        # Check if current drive is connected to computer
+        connected_drives = self.getConnectedDrives("full")
+        drive_connected = False
+        for path,name,size,free_space in connected_drives:
+            if name == self.selected_drive['name']:
+                drive_connected = True
+        if drive_connected == True:
+            print(" Drive {} is connected to this computer ".format(self.selected_drive['name']).center(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
+        else:
+            print(" Drive {} is NOT connected to this computer ".format(self.selected_drive['name']).center(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
+        print("".center(self.terminal_width, '#'))
+        print(" 0. Back main menu".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
+        if(drive_connected == True):
+            print(" 1. Index Drive".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
+        else:
+            print(" 1. Index Drive (Drive not connected)".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
+        print(" 2. Remove Drive".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
+        print(" 3. Clear drive selection".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
+        print("".center(self.terminal_width, '#'))
+        drive_action = self.askString("Select an action : ",["0","1","2","3"])
+        match drive_action:
+            case "0":
+                self.selected_drive = {"id":None,"name":None,"path":None,"group":None,"size":None,"free_space":None,"ts_registered":None,"ts_lastindex":None,"ts_lastsync":None}
+                self.task_action = None
+            case "1":
+                if(drive_connected == True):
+                    self.indexDrive()
+                else:
+                    print(" Drive {} is not connected to this computer. Please connect the drive and try again.".format(self.selected_drive['name']).ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
+            case "2":
+                self.removeDrive()
+            case "3":
+                self.selected_drive = {"id":None,"name":None,"path":None,"group":None,"size":None,"free_space":None,"ts_registered":None,"ts_lastindex":None,"ts_lastsync":None}
+
+    """    # Count registered drives for task
         self.cursor.execute("SELECT `id` FROM `drives` WHERE `task` = {}".format(self.selected_task['id']))
         registered_drives_count = self.cursor.rowcount
         if registered_drives_count > 0:
@@ -199,6 +280,7 @@ class Odbs:
                 print(" 1. Index Drive".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
                 print(" 2. Remove Drive".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
                 print(" 3. Clear drive selection".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
+                print(" 4. Manage unconnected drives".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
                 print("".center(self.terminal_width, '#'))
                 valid_choices = [0,1,2,3]
                 choice = self.askInteger("Select an action : ",valid_choices)
@@ -216,7 +298,7 @@ class Odbs:
                 print(" No registered drive is connected".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
                 print(" 0. Back main menu".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
                 print(" 1. Register Drive".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
-                print(" 2. Management unconnected drive".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
+                print(" 2. Manage unconnected drives".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
                 valid_choices = [0,1,2]
                 choice = self.askInteger("Select an action : ",valid_choices)
                 match choice:
@@ -236,7 +318,7 @@ class Odbs:
                 case 0:
                     self.task_action = None
                 case 1:
-                    self.addDrive()
+                    self.addDrive()"""
 
     # Print Menu task Selection
     def printMenuTaskSelection(self):
@@ -382,6 +464,7 @@ class Odbs:
                     # Not enough space on destination, ask for next drive
                     drive_full = True
                     while drive_full:
+                        pbar_copy_items.write("Current drive {} is full, please remove drive and insert a new one".format(self.selected_drive['name']))
                         self.askDrive()
                         freeBytes, totalBytes, totalFreeBytes = win32api.GetDiskFreeSpaceEx(self.selected_drive['path'])
                         if totalFreeBytes > source_size:
@@ -704,7 +787,7 @@ class Odbs:
     def addDrive(self):
         print("Listing available connected drives")
         print("0. Exit Program")
-        drives = self.listConnectedDrives()
+        drives = self.getConnectedDrives("full")
         drive_num = 1
         drives_choices = []
         valid_actions = [0]
@@ -745,11 +828,11 @@ class Odbs:
         # Disconnected from database
         self.cursor.close()
         self.cnx.close()
-        print("Current drive is full. Please remove current drive and insert another one.")
+        # Wait for user input
         self.pause()
         # Reconnect to database
         self.databaseConnection()
-        # Check if registered drive is available
+        # Check if a registered drive is available
         self.checkDrives()
 
     # Check if registered drive is available for the selected task
@@ -757,7 +840,7 @@ class Odbs:
         # Get registered drives
         registered_drives = self.getRegisteredDrives()
         # Get connected drives
-        connected_drives = self.listConnectedDrives()
+        connected_drives = self.getConnectedDrives("full")
         count_drives = 0
         drives_choices = [(0,0,0,0)]
         valid_choices = [0]
@@ -765,11 +848,11 @@ class Odbs:
             if name in registered_drives:
                 count_drives += 1
                 # get drive id from database
-                self.cursor.execute("SELECT `id` FROM `drives` WHERE `name` = %(name)s",{
+                self.cursor.execute("SELECT `id`,`group`,`size`,`ts_registered`,`ts_lastindex`,`ts_lastsync` FROM `drives` WHERE `name` = %(name)s",{
                     'name':name
                 })
-                drive_id = self.cursor.fetchone()[0]
-                drives_choices.append((count_drives,drive_id,name,path))
+                drive_infos = self.cursor.fetchone()
+                drives_choices.append((count_drives,drive_infos[0],name,path,drive_infos[1],drive_infos[2],free_space,drive_infos[3],drive_infos[4],drive_infos[5]))
                 valid_choices.append(count_drives)
                 # Update drive info in database : size and free space
                 self.cursor.execute("UPDATE `drives` SET `size` = %(size)s, `free_space` = %(free_space)s WHERE `name` = %(name)s",{
@@ -783,17 +866,37 @@ class Odbs:
                 self.addDrive()
         elif count_drives == 1:
             # Auto select drive
-            self.selected_drive = {"id":drives_choices[1][1],"name":drives_choices[1][2],"path":drives_choices[1][3]}
+            self.selected_drive = {
+                "id"            :drives_choices[1][1],
+                "name"          :drives_choices[1][2],
+                "path"          :drives_choices[1][3],
+                "group"         :drives_choices[1][4],
+                "size"          :drives_choices[1][5],
+                "free_space"    :drives_choices[1][6],
+                "ts_registered" :drives_choices[1][7],
+                "ts_lastindex"  :drives_choices[1][8],
+                "ts_lastsync"   :drives_choices[1][9]
+            }
             print("Drive {} ({}) selected".format(self.selected_drive['name'],self.selected_drive['path']))
         else:
             print(" Multiple drives found.".ljust(self.terminal_width-2).center(self.terminal_width,"#"))
             print("0. Exit Program")
-            for drive_num,drive_id,name,path in drives_choices:
+            for drive_num,id,name,path,group,size,free_space,ts_registered,ts_lastindex,ts_lastsync in drives_choices:
                 if drive_num != 0:
                     print(" {}. {} ({})".format(drive_num,name,path).ljust(self.terminal_width-2).center(self.terminal_width,"#"))
             selection = self.askInteger("Select drive : ",valid_choices)
             if selection != 0:
-                self.selected_drive = {"id":drives_choices[selection][1],"name":drives_choices[selection][2],"path":drives_choices[selection][3]}
+                self.selected_drive = {
+                    "id"            :drives_choices[selection][1],
+                    "name"          :drives_choices[selection][2],
+                    "path"          :drives_choices[selection][3],
+                    "group"         :drives_choices[selection][4],
+                    "size"          :drives_choices[selection][5],
+                    "free_space"    :drives_choices[selection][6],
+                    "ts_registered" :drives_choices[selection][7],
+                    "ts_lastindex"  :drives_choices[selection][8],
+                    "ts_lastsync"   :drives_choices[selection][9]
+                }
             else:
                 print("Exiting program")
                 sys.exit(0)
@@ -807,15 +910,18 @@ class Odbs:
             return None
 
     # Get registered drives names for the selected task
-    def getRegisteredDrives(self):
-        self.cursor.execute("SELECT `id`,`name` FROM `drives` WHERE `task` = %(task)s ORDER BY `name`",{ "task": self.selected_task['id'] })
+    def getRegisteredDrives(self,format="list"):
+        self.cursor.execute("SELECT `id`,`name`,`task`,`group`,`size`,`free_space`,`ts_registered`,`ts_lastindex`,`ts_lastsync` FROM `drives` WHERE `task` = %(task)s ORDER BY `name`",{ "task": self.selected_task['id'] })
         registered_drives = []
-        for id,name in self.cursor:
-            registered_drives.append(name)
+        for id,name,task,group,size,free_space,ts_registered,ts_lastindex,ts_lastsync in self.cursor:
+            if format == "list":
+                registered_drives.append(name)
+            else:
+                registered_drives.append((id,name,task,group,size,free_space,ts_registered,ts_lastindex,ts_lastsync))
         return registered_drives
 
     # List connected drives
-    def listConnectedDrives(self):
+    def getConnectedDrives(self,format="list"):
         # Get all connected drives
         drives = win32api.GetLogicalDriveStrings().split('\000')[:-1]
         # Get system drive
@@ -826,5 +932,53 @@ class Odbs:
                 if not re.match(system_drive,drive):
                     volname, volsernum, maxfilenamlen, sysflags, filesystemname = self.getDriveInfos(drive)
                     free_bytes, total_bytes, total_free_bytes = win32api.GetDiskFreeSpaceEx(drive)
-                    fixed_drives.append((drive,volname,total_bytes,total_free_bytes))
+                    if format == "list":
+                        fixed_drives.append(volname)
+                    else:
+                        fixed_drives.append((drive,volname,total_bytes,total_free_bytes))
         return fixed_drives
+    
+    # Get Drive free space from path
+    def getDriveFreeSpace(self,drive):
+        free_bytes, total_bytes, total_free_bytes = win32api.GetDiskFreeSpaceEx(drive)
+        return total_free_bytes
+
+    # Get drive path from disk label
+    def getDrivePath(self,drive_name):
+        drives = win32api.GetLogicalDriveStrings().split('\000')[:-1]
+        for drive in drives:
+            if win32file.GetDriveType(drive) == win32file.DRIVE_FIXED:
+                volname, volsernum, maxfilenamlen, sysflags, filesystemname = self.getDriveInfos(drive)
+                if volname == drive_name:
+                    return drive
+        return None
+
+    # Remove drive from database and clean file entry
+    def removeDrive(self):
+        # Clean files entry
+        match self.selected_drive['group']:
+            case "A":
+                self.cursor.execute("UPDATE `files` SET `backup_a_drive` = NULL, `backup_a_path` = NULL, `backup_a_date` WHERE `backup_a_drive` = %(drive)s",{
+                    'drive':self.selected_drive['id']
+                })
+            case "B":
+                self.cursor.execute("UPDATE `files` SET `backup_b_drive` = NULL, `backup_b_path` = NULL, `backup_b_date` WHERE `backup_b_drive` = %(drive)s",{
+                    'drive':self.selected_drive['id']
+                })
+            case "C":
+                self.cursor.execute("UPDATE `files` SET `backup_c_drive` = NULL, `backup_c_path` = NULL, `backup_c_date` WHERE `backup_c_drive` = %(drive)s",{
+                    'drive':self.selected_drive['id']
+                })
+            case _:
+                print("Error : Drive group {} is not supported".format(self.selected_drive['group']))
+                sys.exit(1)
+        self.cnx.commit()
+        self.cursor.execute("DELETE FROM `drives` WHERE `id` = %(id)s",{
+            'id':self.selected_drive['id']
+        })
+        if self.cnx.commit():
+            print("Drive {} ({}) removed successfully".format(self.selected_drive['name'],self.selected_drive['path']))
+        else:
+            print("Error removing drive {} ({})".format(self.selected_drive['name'],self.selected_drive['path']))
+        self.selected_drive = {"id":None,"name":None,"path":None,"group":None,"size":None,"free_space":None,"ts_registered":None,"ts_lastindex":None,"ts_lastsync":None}
+        self.checkDrives()
