@@ -473,7 +473,7 @@ class Odbs:
                             pbar_drive_usage.update(totalBytes-totalFreeBytes)
                             drive_full = False
                 source_file = os.path.join(source_path,filename)
-                pbar_copy_items.write("Copying {}".format(source_file))
+                pbar_copy_items.write("Copying {} ({})".format(source_file,self.convertSize(source_size)))
                 # Enought space on destination, proceed further
                 if os.path.exists(source_file):
                     # Source file exist
