@@ -1,0 +1,14 @@
+{
+	"db_host":				"localhost",
+	"db_port":				"3306",
+	"db_name":				"odbs",
+	"db_user":				"odbs",
+	"db_pass":				"secret",
+	"smtp_server_host":		"smtp.domain.com",
+	"smtp_server_port":		"25",
+	"smtp_server_user":		"",
+	"smtp_server_pass":		"",
+	"smtp_sender_address":	"odbs@domain.com",
+	"smtp_sender_name":		"Offline Distributed Backup Script",
+	"smtp_recipient":		"myemail@outlook.com"
+}
