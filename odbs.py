@@ -981,4 +981,3 @@ class Odbs:
         else:
             print("Error removing drive {} ({})".format(self.selected_drive['name'],self.selected_drive['path']))
         self.selected_drive = {"id":None,"name":None,"path":None,"group":None,"size":None,"free_space":None,"ts_registered":None,"ts_lastindex":None,"ts_lastsync":None}
-        self.checkDrives()
