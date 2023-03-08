@@ -473,6 +473,9 @@ class Odbs:
                     drive_full = True
                     while drive_full:
                         pbar_copy_items.write("Current drive {} is full, please remove drive and insert a new one".format(self.selected_drive['name']))
+                        pbar_copy_items.clear()
+                        pbar_copy_size.clear()
+                        pbar_drive_usage.clear()
                         self.askDrive()
                         try:
                             freeBytes, totalBytes, totalFreeBytes = win32api.GetDiskFreeSpaceEx(self.selected_drive['path'])
@@ -484,6 +487,9 @@ class Odbs:
                             pbar_drive_usage = tqdm(total=totalBytes,desc='Drive {} Usage'.format(self.selected_drive['name']),unit='Bytes',unit_scale=True,unit_divisor=1024,miniters=1,position=2)
                             pbar_drive_usage.update(totalBytes-totalFreeBytes)
                             drive_full = False
+                    pbar_copy_items.refresh()
+                    pbar_copy_size.refresh()
+                    pbar_drive_usage.refresh()
                 source_file = os.path.join(source_path,filename)
                 pbar_copy_items.write("Copying {} ({})".format(source_file,self.convertSize(source_size)))
                 # Enought space on destination, proceed further
