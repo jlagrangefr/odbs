@@ -126,7 +126,7 @@ class Odbs:
             return False
 
     # Pause program
-    def pause(self):
+    def pause(self,tqdm = False):
         programPause = input("Press the <ENTER> key to continue...")
 
     #########################################################
@@ -445,7 +445,11 @@ class Odbs:
         processed_size = 0
         pbar_copy_items = tqdm(total=len(filelist),unit='Files',unit_scale=True,unit_divisor=1000,miniters=1,position=0)
         pbar_copy_size = tqdm(total=total_size,unit='Bytes',unit_scale=True,unit_divisor=1024,miniters=1,position=1)
-        freeBytes, totalBytes, totalFreeBytes = win32api.GetDiskFreeSpaceEx(self.selected_drive['path'])
+        try:
+            freeBytes, totalBytes, totalFreeBytes = win32api.GetDiskFreeSpaceEx(self.selected_drive['path'])
+        except:
+            print("Can't connect to drive {}, please check if path is correct.".format(self.selected_drive['path']))
+            sys.exit(0)
         pbar_drive_usage = tqdm(total=totalBytes,desc='Drive {} Usage'.format(self.selected_drive['name']),unit='Bytes',unit_scale=True,unit_divisor=1024,miniters=1,position=2)
         pbar_drive_usage.update(totalBytes-totalFreeBytes)
 
@@ -458,7 +462,11 @@ class Odbs:
         for id,filename,source_path,source_size,backup_a_date in filelist:
             if backup_a_date is None:
                 # File is yet to be backuped
-                freeBytes, totalBytes, totalFreeBytes = win32api.GetDiskFreeSpaceEx(self.selected_drive['path'])
+                try:
+                    freeBytes, totalBytes, totalFreeBytes = win32api.GetDiskFreeSpaceEx(self.selected_drive['path'])
+                except:
+                    print("Can't connect to drive {}, please check if path is correct.".format(self.selected_drive['path']))
+                    sys.exit(0)
                 # Check if there is enough space on destination
                 if totalFreeBytes < source_size:
                     # Not enough space on destination, ask for next drive
@@ -466,7 +474,11 @@ class Odbs:
                     while drive_full:
                         pbar_copy_items.write("Current drive {} is full, please remove drive and insert a new one".format(self.selected_drive['name']))
                         self.askDrive()
-                        freeBytes, totalBytes, totalFreeBytes = win32api.GetDiskFreeSpaceEx(self.selected_drive['path'])
+                        try:
+                            freeBytes, totalBytes, totalFreeBytes = win32api.GetDiskFreeSpaceEx(self.selected_drive['path'])
+                        except:
+                            print("Can't connect to drive {}, please check if path is correct.".format(self.selected_drive['path']))
+                            sys.exit(0)
                         if totalFreeBytes > source_size:
                             pbar_drive_usage.close()
                             pbar_drive_usage = tqdm(total=totalBytes,desc='Drive {} Usage'.format(self.selected_drive['name']),unit='Bytes',unit_scale=True,unit_divisor=1024,miniters=1,position=2)
@@ -554,7 +566,11 @@ class Odbs:
         pbar_drive_usage.close()
 
         # Get free_space on drive
-        free_bytes, total_bytes, total_free_bytes = win32api.GetDiskFreeSpaceEx(self.selected_drive['path'])
+        try:
+            free_bytes, total_bytes, total_free_bytes = win32api.GetDiskFreeSpaceEx(self.selected_drive['path'])
+        except:
+            print("Can't connect to drive {}, please check if path is correct.".format(self.selected_drive['path']))
+            sys.exit(0)
         # Update free space and ts_lastsync on drive
         self.cursor.execute("UPDATE `drives` SET `free_space` = %(free_space)s,`ts_lastsync` = UNIX_TIMESTAMP() WHERE `id` = %(id)s",{'free_space':total_free_bytes,'id':self.selected_drive['id']})
         self.cnx.commit()
@@ -679,7 +695,11 @@ class Odbs:
         pbar_index.close()
 
         # Get free_space on drive
-        free_bytes, total_bytes, total_free_bytes = win32api.GetDiskFreeSpaceEx(self.selected_drive['path'])
+        try:
+            free_bytes, total_bytes, total_free_bytes = win32api.GetDiskFreeSpaceEx(self.selected_drive['path'])
+        except:
+            print("Error while getting free space on drive {}.".format(self.selected_drive['path']))
+            sys.exit(1)
         # Update ts_lastindex and free_space for drive in database
         self.cursor.execute("UPDATE `drives` SET `ts_lastindex` = UNIX_TIMESTAMP(), `free_space` = %(free_space)s WHERE `id` = %(id)s",{'free_space':total_free_bytes,'id':self.selected_drive['id']})
         self.cnx.commit()
@@ -821,7 +841,11 @@ class Odbs:
     # Drive is full, ask other registered drive or register new drive
     def askDrive(self):
         # Get drive free space
-        free_bytes, total_bytes, total_free_bytes = win32api.GetDiskFreeSpaceEx(self.selected_drive['path'])
+        try:
+            free_bytes, total_bytes, total_free_bytes = win32api.GetDiskFreeSpaceEx(self.selected_drive['path'])
+        except:
+            self.selected_drive = None
+            return False
         # Update free space and ts_lastsync on drive
         self.cursor.execute("UPDATE `drives` SET `free_space` = %(free_space)s,`ts_lastsync` = UNIX_TIMESTAMP() WHERE `id` = %(id)s",{'free_space':total_free_bytes,'id':self.selected_drive['id']})
         self.cnx.commit()
@@ -906,8 +930,7 @@ class Odbs:
         try:
             return win32api.GetVolumeInformation(drive)
         except:
-            print("Error parsing drive {} ".format(drive))
-            return None
+            return (None,None,None,None,None)
 
     # Get registered drives names for the selected task
     def getRegisteredDrives(self,format="list"):
@@ -931,7 +954,10 @@ class Odbs:
             if win32file.GetDriveType(drive) == win32file.DRIVE_FIXED:
                 if not re.match(system_drive,drive):
                     volname, volsernum, maxfilenamlen, sysflags, filesystemname = self.getDriveInfos(drive)
-                    free_bytes, total_bytes, total_free_bytes = win32api.GetDiskFreeSpaceEx(drive)
+                    try:
+                        free_bytes, total_bytes, total_free_bytes = win32api.GetDiskFreeSpaceEx(drive)
+                    except:
+                        free_bytes, total_bytes, total_free_bytes = (None,None,None)
                     if format == "list":
                         fixed_drives.append(volname)
                     else:
@@ -940,8 +966,11 @@ class Odbs:
     
     # Get Drive free space from path
     def getDriveFreeSpace(self,drive):
-        free_bytes, total_bytes, total_free_bytes = win32api.GetDiskFreeSpaceEx(drive)
-        return total_free_bytes
+        try:
+            free_bytes, total_bytes, total_free_bytes = win32api.GetDiskFreeSpaceEx(drive)
+            return total_free_bytes
+        except:
+            return None
 
     # Get drive path from disk label
     def getDrivePath(self,drive_name):
