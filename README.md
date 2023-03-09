@@ -21,9 +21,9 @@ For interractive mode start run.py script
 
  python run.py
 
-The run.py can be executed with muliple flag, full list bellow
+The run.py can be executed with muliple flag, full list bellow (Comming in v0.2)
 
---no-index					
+--no-index						Task is started with no indexation mode
 --register-drive "drive label"	Specify drive label to register, must be used in combination with --task flag	
 --start-task	"task name"		Specify task to start
 --task "task name"				Specify task to start. Will search for a registered connected drive, if none is available will do nothing
@@ -34,11 +34,27 @@ None at this instant, feel free to open an issue
 
 ## Roadmap
 
-- Drive initialisation (Clear drive and encrypt with bitlocker)
-- Remove lost/broken drive and clear backup status
-- Add backup history point
-- Rebuild from scratch indexation process to make backup faster
+v 0.1 (current) :
 - Database already ready but script can only backup to drive of group A at this moment. Two more group will be available B and C for deduplication purpose
+- Fix all small bug and add missing functions to current script
+
+v 0.2 :
+- Add task options to database
+- Add full checksum while indexing source folder for data integrity check (Task Option, default Off)
+- Add unmanaged script use by task manager by requiring no user input
+- Build notification system
+- Store logs of operations into a log file when in background mode
+- Build different verbose level for background mode (1: Only errors, 2: Warnings and above, 3: Informationals and above, 4: Debug mode)
+
+v 0.3 :
+- Drive initialisation (Clear drive and encrypt with bitlocker)
+- Make drive fully autonomous to select registered drive and change drive when first drive is full (Task Option, default Off)
+
+v 0.4 :
+- Add backup history point
+
+Long future
+- Rebuild from scratch indexation process to make backup faster
 
 ## License
 
