@@ -849,6 +849,9 @@ class Odbs:
                         self.cnx.commit()
                         if self.cursor.rowcount > 0:
                             print("{} ({}) added successfully".format(volname,drive))
+            else:
+                print("Exiting program")
+                sys.exit(0)
 
     # Drive is full, ask other registered drive or register new drive
     def askDrive(self):
@@ -899,6 +902,7 @@ class Odbs:
                 self.cnx.commit()
         if count_drives == 0:
             if addDrive:
+                print(" No registered drive found.".ljust(self.terminal_width-2,' ').center(self.terminal_width,"#"))
                 self.addDrive()
         elif count_drives == 1:
             # Auto select drive
