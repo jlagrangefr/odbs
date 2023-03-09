@@ -197,7 +197,13 @@ class Odbs:
         print(" Select a drive : ".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
         self.cursor.execute("SELECT `id`,`name`,`group`,`size`,`free_space` FROM `drives` WHERE `task` = {} ORDER BY `group`,`name`".format(self.selected_task['id']))
         if self.cursor.rowcount == 0:
-            print(" No drive registered for this task ".center(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
+            print(" No drive registered for this task ".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
+            print("".center(self.terminal_width, '#'))
+            add_choice = self.askString("Do you want to add a drive ? (y/n) : ",["y","n"])
+            if add_choice == "y":
+                self.addDrive()
+            else:
+                self.task_action = None
         else:
             registered_drives = self.cursor.fetchall()
             # Get list of connected drives
