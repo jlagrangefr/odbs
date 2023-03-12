@@ -592,8 +592,10 @@ class Odbs:
         else:
             print("\nBackup completed succesfuly");
 
-        # Copy files
+        # Copy finished
         self.pause()
+        self.cnx.reconnect()
+        self.task_action = None
 
     #########################################################
     #                Indexation Functions                   #    
