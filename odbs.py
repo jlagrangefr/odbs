@@ -384,6 +384,7 @@ class Odbs:
         elif choice == 5:
             # Clear task selection
             self.selected_task = {"id":None,"name":None,"path":None}
+            self.selected_drive = {"id":None,"name":None,"path":None,"group":None,"size":None,"free_space":None,"ts_registered":None,"ts_lastindex":None,"ts_lastsync":None}
 
     ########################################################
     #                 Task Managing Functions              #
