@@ -441,7 +441,16 @@ class Odbs:
         
         # Build file transfer list
         print("Building Transfer List")
-        self.cursor.execute("SELECT id,filename,source_path,source_size,backup_a_date FROM `files` WHERE `task` = %(task)s AND `source_missing` = 0 ORDER BY `source_path`,`filename`",{'task':self.selected_task['id']})
+        match self.selected_drive['group']:
+            case "A":
+                self.cursor.execute("SELECT id,filename,source_path,source_size,backup_a_date FROM `files` WHERE `task` = %(task)s AND `source_missing` = 0 ORDER BY `source_path`,`filename`",{'task':self.selected_task['id']})
+            case "B":
+                self.cursor.execute("SELECT id,filename,source_path,source_size,backup_b_date FROM `files` WHERE `task` = %(task)s AND `source_missing` = 0 ORDER BY `source_path`,`filename`",{'task':self.selected_task['id']})
+            case "C":
+                self.cursor.execute("SELECT id,filename,source_path,source_size,backup_c_date FROM `files` WHERE `task` = %(task)s AND `source_missing` = 0 ORDER BY `source_path`,`filename`",{'task':self.selected_task['id']})
+            case _:
+                print("Invalid drive group")
+                sys.exit(0)
         filelist = self.cursor.fetchall()
         self.cursor.execute("SELECT SUM(source_size) FROM (SELECT source_size FROM `files` WHERE `task` = %(task)s AND `source_missing` = 0 ORDER BY `source_path`,`filename`) AS F",{'task':self.selected_task['id']})
         total_size = int(self.cursor.fetchone()[0])
@@ -465,8 +474,8 @@ class Odbs:
         count_copy = {"total":0,"success":0,"errors":0,"missing":0,"already":0}
 
         # Copy Loop
-        for id,filename,source_path,source_size,backup_a_date in filelist:
-            if backup_a_date is None:
+        for id,filename,source_path,source_size,backup_date in filelist:
+            if backup_date is None:
                 # File is yet to be backuped
                 try:
                     freeBytes, totalBytes, totalFreeBytes = win32api.GetDiskFreeSpaceEx(self.selected_drive['path'])
@@ -543,13 +552,31 @@ class Odbs:
                             processed_size += source_size
                     # Storing in database if copy has not failed
                     if not copy_failed:
-                        data = {
-                            'backup_a_drive'	: self.selected_drive['id'],
-                            'backup_a_path'	    : dest_path.replace(self.selected_drive['path'],self.selected_drive['name']+":\\"),
-                            'backup_a_date'	    : int(time.time()),
-                            'id'				: id,
-                        }
-                        self.cursor.execute("UPDATE `files` SET `backup_a_drive` = %(backup_a_drive)s,`backup_a_path` = %(backup_a_path)s,`backup_a_date` = %(backup_a_date)s WHERE `id` = %(id)s",data)
+                        match self.selected_drive['group']:
+                            case "A":
+                                data = {
+                                    'backup_a_drive'	: self.selected_drive['id'],
+                                    'backup_a_path'	    : dest_path.replace(self.selected_drive['path'],self.selected_drive['name']+":\\"),
+                                    'backup_a_date'	    : int(time.time()),
+                                    'id'				: id,
+                                }
+                                self.cursor.execute("UPDATE `files` SET `backup_a_drive` = %(backup_a_drive)s,`backup_a_path` = %(backup_a_path)s,`backup_a_date` = %(backup_a_date)s WHERE `id` = %(id)s",data)
+                            case "B":
+                                data = {
+                                    'backup_b_drive'	: self.selected_drive['id'],
+                                    'backup_b_path'	    : dest_path.replace(self.selected_drive['path'],self.selected_drive['name']+":\\"),
+                                    'backup_b_date'	    : int(time.time()),
+                                    'id'				: id,
+                                }
+                                self.cursor.execute("UPDATE `files` SET `backup_b_drive` = %(backup_b_drive)s,`backup_b_path` = %(backup_b_path)s,`backup_b_date` = %(backup_b_date)s WHERE `id` = %(id)s",data)
+                            case "C":
+                                data = {
+                                    'backup_c_drive'	: self.selected_drive['id'],
+                                    'backup_c_path'	    : dest_path.replace(self.selected_drive['path'],self.selected_drive['name']+":\\"),
+                                    'backup_c_date'	    : int(time.time()),
+                                    'id'				: id,
+                                }
+                                self.cursor.execute("UPDATE `files` SET `backup_c_drive` = %(backup_c_drive)s,`backup_c_path` = %(backup_c_path)s,`backup_c_date` = %(backup_c_date)s WHERE `id` = %(id)s",data)
                         self.cnx.commit()
                     # Increment progress bars
                     pbar_copy_items.update(1)
