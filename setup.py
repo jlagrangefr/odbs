@@ -1,4 +1,4 @@
-import os,json, subprocess
+import os,json,subprocess
 
 # Check of config.json file exists
 if not os.path.isfile("config.json"):
@@ -47,6 +47,6 @@ try:
 
     # Print success message
     print("Database setup complete!")
-except:
-    print("Error connecting to MySQL database!")
+except mysql.connector.Error as err:
+    print("Error connecting to MySQL database : " + str(err))
     exit()
