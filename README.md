@@ -31,6 +31,7 @@ The run.py can be executed with muliple flag, full list bellow (Comming in v0.2)
 
 ## Know bug or issues
 
+Check the Roadmap for missing functionality
 None at this instant, feel free to open an issue
 
 ## Roadmap
@@ -58,7 +59,7 @@ Long future
 - Rebuild from scratch indexation process to make backup faster
 
 ## License
-
+MIT License. See LICENSE.MD
 
 ## Project status
 Under active devellopement and usage by myself
