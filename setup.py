@@ -34,10 +34,10 @@ try:
     )
 
     # Create cursor
-    mycursor = mydb.cursor()
+    mycursor = mydb.cursor(buffered=True)
 
     # Execute SQL
-    mycursor.execute(sql)
+    mycursor.execute(sql,multi=True)
 
     # Commit changes
     mydb.commit()
