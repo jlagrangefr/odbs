@@ -23,9 +23,10 @@ For interractive mode start run.py script
 
 The run.py can be executed with muliple flag, full list bellow (Comming in v0.2)
 
+--drive	"label"					Specify drive to use with selected task
 --no-index						Task is started with no indexation mode
 --register-drive "drive label"	Specify drive label to register, must be used in combination with --task flag	
---start-task	"task name"		Specify task to start
+--start-task "task name"		Specify task to start
 --task "task name"				Specify task to start. Will search for a registered connected drive, if none is available will do nothing
 
 ## Know bug or issues
@@ -45,6 +46,7 @@ v 0.2 :
 v 0.3 :
 - Drive initialisation (Clear drive and encrypt with bitlocker)
 - Make drive fully autonomous to select registered drive and change drive when first drive is full (Task Option, default Off)
+- Add Email Notification in task option
 
 v 0.4 :
 - Add backup history point
