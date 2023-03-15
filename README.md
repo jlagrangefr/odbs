@@ -23,11 +23,13 @@ For interractive mode start run.py script
 
 The run.py can be executed with muliple flag, full list bellow (Comming in v0.2)
 
---drive	"label"					Specify drive to use with selected task
---no-index						Task is started with no indexation mode
---register-drive "drive label"	Specify drive label to register, must be used in combination with --task flag	
---start-task "task name"		Specify task to start
---task "task name"				Specify task to start. Will search for a registered connected drive, if none is available will do nothing
+| Parameter 						| Description |
+| --------------------------------- | --- |
+| --drive "label" 					| Specify drive to use with selected task, must be used in combination with --task flag |
+| --no-index						| Task is started with no indexation mode |
+| --register-drive "drive label"	| Specify drive label to register, must be used in combination with --task flag |
+| --start-task "task name"			| Specify task to start |
+| --task "task name"				| Specify task to start. Will search for a registered connected drive, if none is available will do nothing |
 
 ## Know bug or issues
 
