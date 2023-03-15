@@ -181,7 +181,8 @@ class Odbs:
                     case "index_task":
                         self.indexTask()
                     case "restore_files":
-                        self.printMenuRestoreFiles()
+                        #self.printMenuRestoreFiles()
+                        print("Not implemented yet")
                     case "delete_task":
                         self.deleteTask()
     
@@ -277,55 +278,6 @@ class Odbs:
             case "3":
                 self.selected_drive = {"id":None,"name":None,"path":None,"group":None,"size":None,"free_space":None,"ts_registered":None,"ts_lastindex":None,"ts_lastsync":None}
 
-    """    # Count registered drives for task
-        self.cursor.execute("SELECT `id` FROM `drives` WHERE `task` = {}".format(self.selected_task['id']))
-        registered_drives_count = self.cursor.rowcount
-        if registered_drives_count > 0:
-            if(self.selected_drive['id'] is not None):
-                print(" 0. Back main menu".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
-                print(" 1. Index Drive".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
-                print(" 2. Remove Drive".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
-                print(" 3. Clear drive selection".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
-                print(" 4. Manage unconnected drives".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
-                print("".center(self.terminal_width, '#'))
-                valid_choices = [0,1,2,3]
-                choice = self.askInteger("Select an action : ",valid_choices)
-                match choice:
-                    case 0:
-                        self.task_action = None
-                        self.selected_drive = {"id":None,"name":None,"path":None}
-                    case 1:
-                        self.indexDrive()
-                    case 2:
-                        self.removeDrive()
-                    case 3:
-                        self.selected_drive = {"id":None,"name":None,"path":None}
-            else:
-                print(" No registered drive is connected".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
-                print(" 0. Back main menu".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
-                print(" 1. Register Drive".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
-                print(" 2. Manage unconnected drives".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
-                valid_choices = [0,1,2]
-                choice = self.askInteger("Select an action : ",valid_choices)
-                match choice:
-                    case 0:
-                        self.task_action = None
-                    case 1:
-                        self.addDrive()
-                    case 2:
-                        self.printMenuDriveSelection()
-        else:
-            print(" This task has no registered drive".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
-            print(" 0. Back main menu".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
-            print(" 1. Register Drive".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
-            valid_choices = [0,1]
-            choice = self.askInteger("Select an action : ",valid_choices)
-            match choice:
-                case 0:
-                    self.task_action = None
-                case 1:
-                    self.addDrive()"""
-
     # Print Menu task Selection
     def printMenuTaskSelection(self):
         # get task list from database
@@ -405,6 +357,17 @@ class Odbs:
             self.cnx.commit()
         else:
             print("New task creation failed")
+
+    # Delete task from database
+    def deleteTask(self):
+        self.cursor.execute("DELETE FROM `tasks` WHERE `id` = %(id)s",{
+            "id": self.selected_task['id']
+        })
+        if self.cursor.rowcount > 0:
+            print("\nTask {} deleted successfully\n".format(self.selected_task['name']))
+            self.cnx.commit()
+        else:
+            print("Task deletion failed")
 
     # Show task details
     def showTask(self):
