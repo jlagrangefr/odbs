@@ -413,7 +413,7 @@ class Odbs:
             case "C":
                 self.cursor.execute("SELECT id,filename,source_path,source_size,backup_c_date FROM `files` WHERE `task` = %(task)s AND `source_missing` = 0 ORDER BY `source_path`,`filename`",{'task':self.selected_task['id']})
             case _:
-                print("Invalid drive group")
+                print("Error : Drive group {} is not supported".format(self.selected_drive['group']))
                 sys.exit(0)
         filelist = self.cursor.fetchall()
         self.cursor.execute("SELECT SUM(source_size) FROM (SELECT source_size FROM `files` WHERE `task` = %(task)s AND `source_missing` = 0 ORDER BY `source_path`,`filename`) AS F",{'task':self.selected_task['id']})
@@ -657,21 +657,58 @@ class Odbs:
                         shutil.copy2(os.path.join(path,name),os.path.join(source_path,name))
                         count['import'] += 1
                         # Add file to database
-                        data = {
-                            'task'              : self.selected_task['id'],
-                            'filename'	        : name,
-                            'extention'	        : extention,
-                            'source_volume'	    : volname,
-                            'source_path'	    : path.replace(self.selected_drive['path'],self.selected_task['name']),
-                            'source_last_seen'  : int(time.time()),
-                            'source_size'	    : filesize,
-                            'source_checksum'   : checksum,
-                            'source_missing'    : 0,
-                            'backup_a_drive'	: self.selected_drive['id'],
-                            'backup_a_path'	    : path.replace(self.selected_drive['path'],self.selected_drive['name']+":\\"),
-                            'backup_a_date'	    : int(time.time()),
-                        }
-                        self.cursor.execute("INSERT INTO `files` (`task`,`filename`,`extention`,`source_volume`,`source_path`,`source_last_seen`,`source_size`,`source_checksum`,`source_missing`,`backup_a_drive`,`backup_a_path`,`backup_a_date`) VALUES (%(task)s,%(filename)s,%(extention)s,%(source_volume)s,%(source_path)s,%(source_last_seen)s,%(source_size)s,%(source_checksum)s,%(source_missing)s,%(backup_a_drive)s,%(backup_a_path)s,%(backup_a_date)s)",data)
+                        match self.selected_drive['group']:
+                            case "A":
+                                data = {
+                                    'task'              : self.selected_task['id'],
+                                    'filename'	        : name,
+                                    'extention'	        : extention,
+                                    'source_volume'	    : volname,
+                                    'source_path'	    : path.replace(self.selected_drive['path'],self.selected_task['name']),
+                                    'source_last_seen'  : int(time.time()),
+                                    'source_size'	    : filesize,
+                                    'source_checksum'   : checksum,
+                                    'source_missing'    : 0,
+                                    'backup_a_drive'	: self.selected_drive['id'],
+                                    'backup_a_path'	    : path.replace(self.selected_drive['path'],self.selected_drive['name']+":\\"),
+                                    'backup_a_date'	    : int(time.time()),
+                                }
+                                self.cursor.execute("INSERT INTO `files` (`task`,`filename`,`extention`,`source_volume`,`source_path`,`source_last_seen`,`source_size`,`source_checksum`,`source_missing`,`backup_a_drive`,`backup_a_path`,`backup_a_date`) VALUES (%(task)s,%(filename)s,%(extention)s,%(source_volume)s,%(source_path)s,%(source_last_seen)s,%(source_size)s,%(source_checksum)s,%(source_missing)s,%(backup_a_drive)s,%(backup_a_path)s,%(backup_a_date)s)",data)
+                            case "B":
+                                data = {
+                                    'task'              : self.selected_task['id'],
+                                    'filename'	        : name,
+                                    'extention'	        : extention,
+                                    'source_volume'	    : volname,
+                                    'source_path'	    : path.replace(self.selected_drive['path'],self.selected_task['name']),
+                                    'source_last_seen'  : int(time.time()),
+                                    'source_size'	    : filesize,
+                                    'source_checksum'   : checksum,
+                                    'source_missing'    : 0,
+                                    'backup_b_drive'	: self.selected_drive['id'],
+                                    'backup_b_path'	    : path.replace(self.selected_drive['path'],self.selected_drive['name']+":\\"),
+                                    'backup_b_date'	    : int(time.time()),
+                                }
+                                self.cursor.execute("INSERT INTO `files` (`task`,`filename`,`extention`,`source_volume`,`source_path`,`source_last_seen`,`source_size`,`source_checksum`,`source_missing`,`backup_b_drive`,`backup_b_path`,`backup_b_date`) VALUES (%(task)s,%(filename)s,%(extention)s,%(source_volume)s,%(source_path)s,%(source_last_seen)s,%(source_size)s,%(source_checksum)s,%(source_missing)s,%(backup_b_drive)s,%(backup_b_path)s,%(backup_b_date)s)",data)
+                            case "C":
+                                data = {
+                                    'task'              : self.selected_task['id'],
+                                    'filename'	        : name,
+                                    'extention'	        : extention,
+                                    'source_volume'	    : volname,
+                                    'source_path'	    : path.replace(self.selected_drive['path'],self.selected_task['name']),
+                                    'source_last_seen'  : int(time.time()),
+                                    'source_size'	    : filesize,
+                                    'source_checksum'   : checksum,
+                                    'source_missing'    : 0,
+                                    'backup_c_drive'	: self.selected_drive['id'],
+                                    'backup_c_path'	    : path.replace(self.selected_drive['path'],self.selected_drive['name']+":\\"),
+                                    'backup_c_date'	    : int(time.time()),
+                                }
+                                self.cursor.execute("INSERT INTO `files` (`task`,`filename`,`extention`,`source_volume`,`source_path`,`source_last_seen`,`source_size`,`source_checksum`,`source_missing`,`backup_c_drive`,`backup_c_path`,`backup_c_date`) VALUES (%(task)s,%(filename)s,%(extention)s,%(source_volume)s,%(source_path)s,%(source_last_seen)s,%(source_size)s,%(source_checksum)s,%(source_missing)s,%(backup_c_drive)s,%(backup_c_path)s,%(backup_c_date)s)",data)
+                            case _:
+                                print("Error : Drive group {} is not supported".format(self.selected_drive['group']))
+                                sys.exit(1)
                         self.cnx.commit()
                     else:
                         if remove_files:
@@ -683,13 +720,34 @@ class Odbs:
                             count['ignore'] += 1
                 else:
                     # Update file in database
-                    data = {
-                        'id'                : int(result[0]),
-                        'backup_a_drive'	: self.selected_drive['id'],
-                        'backup_a_path'	    : path.replace(self.selected_drive['path'],self.selected_drive['name']+":\\"),
-                        'backup_a_date'	    : int(time.time()),
-                    }
-                    self.cursor.execute("UPDATE `files` SET `backup_a_drive` = %(backup_a_drive)s, `backup_a_path` = %(backup_a_path)s, `backup_a_date` = %(backup_a_date)s WHERE `id` = %(id)s",data)
+                    match self.selected_drive['group']:
+                        case "A":
+                            data = {
+                                'id'                : int(result[0]),
+                                'backup_a_drive'	: self.selected_drive['id'],
+                                'backup_a_path'	    : path.replace(self.selected_drive['path'],self.selected_drive['name']+":\\"),
+                                'backup_a_date'	    : int(time.time()),
+                            }
+                            self.cursor.execute("UPDATE `files` SET `backup_a_drive` = %(backup_a_drive)s, `backup_a_path` = %(backup_a_path)s, `backup_a_date` = %(backup_a_date)s WHERE `id` = %(id)s",data)
+                        case "B":
+                            data = {
+                                'id'                : int(result[0]),
+                                'backup_b_drive'	: self.selected_drive['id'],
+                                'backup_b_path'	    : path.replace(self.selected_drive['path'],self.selected_drive['name']+":\\"),
+                                'backup_b_date'	    : int(time.time()),
+                            }
+                            self.cursor.execute("UPDATE `files` SET `backup_b_drive` = %(backup_b_drive)s, `backup_b_path` = %(backup_b_path)s, `backup_b_date` = %(backup_b_date)s WHERE `id` = %(id)s",data)
+                        case "C":
+                            data = {
+                                'id'                : int(result[0]),
+                                'backup_c_drive'	: self.selected_drive['id'],
+                                'backup_c_path'	    : path.replace(self.selected_drive['path'],self.selected_drive['name']+":\\"),
+                                'backup_c_date'	    : int(time.time()),
+                            }
+                            self.cursor.execute("UPDATE `files` SET `backup_c_drive` = %(backup_c_drive)s, `backup_c_path` = %(backup_c_path)s, `backup_c_date` = %(backup_c_date)s WHERE `id` = %(id)s",data)
+                        case _:
+                            print("Error : Drive group {} is not supported".format(self.selected_drive['group']))
+                            sys.exit(1)
                     self.cnx.commit()
                     count['update'] += 1
 
