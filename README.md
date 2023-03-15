@@ -34,10 +34,6 @@ None at this instant, feel free to open an issue
 
 ## Roadmap
 
-v 0.1 (current) :
-- Database already ready but script can only backup to drive of group A at this moment. Two more group will be available B and C for deduplication purpose
-- Fix all small bug and add missing functions to current script
-
 v 0.2 :
 - Add task options to database
 - Add full checksum while indexing source folder for data integrity check (Task Option, default Off)
@@ -52,6 +48,9 @@ v 0.3 :
 
 v 0.4 :
 - Add backup history point
+
+v 0.5:
+- Restore functions (File, folder or full)
 
 Long future
 - Rebuild from scratch indexation process to make backup faster
