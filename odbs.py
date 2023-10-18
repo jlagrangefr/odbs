@@ -180,6 +180,7 @@ class Odbs:
                         self.printMenuDriveManagement()
                     case "index_task":
                         self.indexTask()
+                        self.pause()
                     case "restore_files":
                         #self.printMenuRestoreFiles()
                         print("Not implemented yet")
@@ -861,6 +862,10 @@ class Odbs:
         self.cursor.execute("UPDATE `tasks` SET `ts_lastindex` = UNIX_TIMESTAMP() WHERE `id` = %(task)s",{'task':self.selected_task['id']})
         # Commit changes
         self.cnx.commit()
+
+        # Reset task_action if task_action is index
+        if self.task_action == "index_task":
+            self.task_action = None
 
     #########################################################
     #              Drives Management Functions              #
