@@ -1,4 +1,4 @@
-import os,json,subprocess
+import os,json,subprocess,sys
 
 # Check of config.json file exists
 if not os.path.isfile("config.json"):
@@ -14,8 +14,47 @@ if not os.path.isfile("schema.sql"):
 with open('config.json') as json_data_file:
     config = json.load(json_data_file)
 
+# Check if python venv exists
+if not os.path.isdir("Scripts"):
+    print("Python venv not found!")
+    print("Please run the following commands manually: ")
+    print("")
+    print("python -m venv .")
+    exit()
+
+# Check if current script has been launched from the venv
+if sys.prefix == sys.base_prefix:
+    print("Please run this script from the python venv!")
+    print("Please run the following commands manually: ")
+    print("")
+    print("Scripts/python setup.py")
+    exit()
+
+# Get current path
+current_path = os.getcwd()
+print(current_path)
+
+# Swap to python from venv
+subprocess.call(current_path+"/Scripts/python -m pip install --upgrade pip", shell=True)
+
 # Install pip dependencies
-subprocess.call("pip install pywin32 mmhash3 mysql.connector tdqm varint", shell=True)
+subprocess.call(current_path+"/Scripts/pip install beaupy pywin32 mmhash3 mysql.connector tdqm varint", shell=True)
+
+# Check if pip dependencies are correctly installed
+try:
+    import beaupy
+    import win32api
+    import mmh3
+    import mysql.connector
+    import tqdm
+    import varint
+except:
+    print("Error installing pip dependencies!")
+    print("Please run the following commands manually:")
+    print("")
+    print("./Scripts/python -m pip install --upgrade pip")
+    print("./Scripts/pip install pywin32 mmhash3 mysql.connector tdqm varint")
+    exit()
 
 # Open SQL file
 sql_file = open("schema.sql", "r")
@@ -35,6 +74,28 @@ try:
 
     # Create cursor
     mycursor = mydb.cursor(buffered=True)
+
+    # Check if database exists
+    mycursor.execute("SHOW DATABASES")
+    databases = mycursor.fetchall()
+    database_exists = False
+    for database in databases:
+        if database[0] == config['db_name']:
+            database_exists = True
+    
+    # If database does not exist, exit with an error
+    if not database_exists:
+        print("Database does not exist!")
+        exit()
+
+    # Check if database is empty
+    mycursor.execute("USE " + config['db_name'])
+    mycursor.execute("SHOW TABLES")
+    tables = mycursor.fetchall()
+    if len(tables) > 0:
+        print("Database is not empty. If you are recovering from a crash or installaing the agent on a new machine this is normal.")
+        print("")
+        exit()
 
     # Execute SQL
     mycursor.execute(sql,multi=True)
