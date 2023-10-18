@@ -321,7 +321,7 @@ class Odbs:
         print(" 4. Restore files".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
         print(" 5. Remove missing files from database".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
         print(" 6. Clear task selection".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
-        valid_choices = [0,1,2,3,4,5]
+        valid_choices = [0,1,2,3,4,5,6]
         print("".center(self.terminal_width, '#'))
         # Ask user input
         choice = self.askInteger("Enter choice : ",valid_choices)
