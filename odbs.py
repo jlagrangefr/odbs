@@ -180,10 +180,15 @@ class Odbs:
                         self.printMenuDriveManagement()
                     case "index_task":
                         self.indexTask()
+                        # Pause script before going back to main menu to let user read output
                         self.pause()
                     case "restore_files":
                         #self.printMenuRestoreFiles()
                         print("Not implemented yet")
+                    case "remove_missing":
+                        self.removeMissing()
+                        # Pause script before going back to main menu to let user read output
+                        self.pause()
                     case "delete_task":
                         self.deleteTask()
     
@@ -314,7 +319,8 @@ class Odbs:
         print(" 2. Manage drives".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
         print(" 3. Index Task".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
         print(" 4. Restore files".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
-        print(" 5. Clear task selection".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
+        print(" 5. Remove missing files from database".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
+        print(" 6. Clear task selection".ljust(self.terminal_width-2, ' ').center(self.terminal_width, '#'))
         valid_choices = [0,1,2,3,4,5]
         print("".center(self.terminal_width, '#'))
         # Ask user input
@@ -335,6 +341,9 @@ class Odbs:
             # Set task action to Restore files
             self.task_action = "restore_files"
         elif choice == 5:
+            # Set task action to Remove missing files from database
+            self.task_action = "remove_missing"
+        elif choice == 6:
             # Clear task selection
             self.selected_task = {"id":None,"name":None,"path":None}
             self.selected_drive = {"id":None,"name":None,"path":None,"group":None,"size":None,"free_space":None,"ts_registered":None,"ts_lastindex":None,"ts_lastsync":None}
@@ -588,6 +597,30 @@ class Odbs:
         self.pause()
         self.cnx.reconnect()
         self.task_action = None
+    
+    #########################################################
+    #                File Management Functions              #
+    #########################################################
+
+    def removeMissing(self):
+        print("Are you sure you want to remove the missing file from database ?")
+        print("This action can't be undone and will make file deleted from the backup drive at next indexation.")
+        print("1. Yes")
+        print("2. No")
+        valid_choices = [1,2]
+        choice = self.askInteger("Enter choice : ",valid_choices)
+        if choice == 1:
+            self.cursor.execute("DELETE FROM `files` WHERE `task` = %(task)s AND `source_missing` = 1",{'task':self.selected_task['id']})
+            num_deleted = self.cursor.rowcount
+            self.cnx.commit()
+            if num_deleted > 0:
+                print(f"{num_deleted} missing files removed from database")
+            else:
+                print("No missing files removed from database")
+        else:
+            print("Missing files removal canceled")
+        if self.task_action == "remove_missing":
+            self.task_action = None
 
     #########################################################
     #                Indexation Functions                   #    
